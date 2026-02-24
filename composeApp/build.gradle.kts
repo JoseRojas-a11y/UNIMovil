@@ -61,8 +61,15 @@ kotlin {
             implementation(libs.voyager.transitions)
             implementation(libs.voyager.koin)
 
+            // KMP-Crypto
+            implementation(libs.kvault)
 
-            // Eliminadas las dependencias de Room y SQLite
+            // ktor
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.logging)
+            implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.kotlinx.html)
+
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

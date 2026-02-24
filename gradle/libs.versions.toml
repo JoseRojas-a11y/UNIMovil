@@ -19,11 +19,17 @@ androidx-appcompat = "1.7.1"
 androidx-core = "1.17.0"
 androidx-lifecycle = "2.9.6"
 
-# -- KMP: Architecture, Navigation & Async --
+# -- KMP: Architecture, Navigation, DataStore & Async --
 voyager = "1.0.0"
 coroutines = "1.10.1"
 serialization = "1.8.0"
 koin = "4.0.0"
+
+# -- KMP-Crypto --
+kvault = "1.12.0"
+
+# -- Peticiones Post --
+ktor = "3.0.3"
 
 # -- Testing --
 junit = "4.13.2"
@@ -68,6 +74,16 @@ koin-android = { module = "io.insert-koin:koin-android", version.ref = "koin" }
 # -- Kotlinx Extensions --
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }
+
+# -- KMP-Crypto --
+kvault = { module = "com.liftric:kvault", version.ref = "kvault" }
+
+# -- Peticiones Post --
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
+ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
+ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "ktor" }
+# Para scraping manual de HTML:
+kotlinx-html = { module = "org.jetbrains.kotlinx:kotlinx-html", version = "0.11.0" }
 
 # -- Android Exclusive (Widgets & Material) --
 androidx-glance-appwidget = { module = "androidx.glance:glance-appwidget", version.ref = "glance" }

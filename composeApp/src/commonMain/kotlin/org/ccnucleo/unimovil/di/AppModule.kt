@@ -7,6 +7,5 @@ import org.ccnucleo.unimovil.presentation.features.login.ui.LoginScreenModel
 
 val appModule = module {
     factory { HomeScreenModel() }
-    factory { LoginScreenModel() }
     factory { ScheduleScreenModel() }
 }

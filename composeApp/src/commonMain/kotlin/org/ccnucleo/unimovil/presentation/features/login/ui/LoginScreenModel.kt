@@ -2,43 +2,103 @@ package org.ccnucleo.unimovil.presentation.features.login.ui
 
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.ccnucleo.unimovil.data.repository.ScrapingRepository
 
-class LoginScreenModel : ScreenModel {
+data class LoginState(
+    val isLoading: Boolean = false,
+    val errorMessage: String? = null
+)
 
-    val email = MutableStateFlow("")
-    val password = MutableStateFlow("")
+class LoginScreenModel(
+    private val scrapingRepository: ScrapingRepository
+) : ScreenModel {
+    private val _codUser = MutableStateFlow("")
+    val codUser = _codUser.asStateFlow()
 
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading
+    private val _password = MutableStateFlow("")
+    val password = _password.asStateFlow()
 
-    private val _loginSuccess = MutableStateFlow(false)
-    val loginSuccess: StateFlow<Boolean> = _loginSuccess
+    private val _isLoginEnable = MutableStateFlow(false)
+    val isLoginEnable = _isLoginEnable.asStateFlow()
 
-    fun onEmailChange(newEmail: String) {
-        email.value = newEmail
+
+    private val _uiState = MutableStateFlow(LoginState())
+    val uiState = _uiState.asStateFlow()
+
+    // Usamos Channel para eventos únicos (navegación, mostrar un Toast, etc.)
+    private val _navigationEvent = Channel<Unit>()
+    val navigationEvent = _navigationEvent.receiveAsFlow()
+
+    fun onLoginChange(coduser: String, password: String) {
+        _codUser.value = coduser
+        _password.value = password
+        _isLoginEnable.value = enableCodUser(coduser) && enablePassword(password)
     }
 
-    fun onPasswordChange(newPassword: String) {
-        password.value = newPassword
+    private fun enableCodUser (coduser: String) : Boolean{
+        return (coduser.length == 9) && (coduser.substring(0,7).all { it.isDigit() }) && (coduser[8].isLetter())
     }
 
-    fun login() {
+    private fun enablePassword (password: String) : Boolean{
+        return (password.length >= 6)
+    }
+
+
+    init {
+        // Al instanciar la pantalla, verificamos si ya hay sesión previa
+        if (scrapingRepository.hasSavedSession()) {
+            attemptAutoLogin()
+        }
+    }
+
+    private fun attemptAutoLogin() {
         screenModelScope.launch {
-            _isLoading.value = true
+            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
 
-            // Aquí iría tu llamada al repositorio/API real
-            delay(1500) // Simulamos una carga de red
+            val result = scrapingRepository.fetchScrapedDataSilently()
 
-            // Validación básica de ejemplo
-            if (email.value.isNotBlank() && password.value.isNotBlank()) {
-                _loginSuccess.value = true
-            }
+            result.fold(
+                onSuccess = {
+                    _uiState.update { it.copy(isLoading = false) }
+                    _navigationEvent.send(Unit)
+                },
+                onFailure = {
+                    // Si el auto-login falla (ej. credenciales cambiadas),
+                    // simplemente quitamos la carga y dejamos que el usuario inicie manualmente.
+                    _uiState.update { it.copy(isLoading = false, errorMessage = null) }
+                }
+            )
+        }
+    }
 
-            _isLoading.value = false
+    fun login(user: String, pass: String) {
+        // Validación local rápida
+        if (user.isBlank() || pass.isBlank()) {
+            _uiState.update { it.copy(errorMessage = "Usuario y contraseña no pueden estar vacíos.") }
+            return
+        }
+
+        screenModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+
+            val result = scrapingRepository.loginAndScrape(user, pass)
+
+            result.fold(
+                onSuccess = {
+                    _uiState.update { it.copy(isLoading = false) }
+                    // ¡Éxito! Disparamos el evento de navegación
+                    _navigationEvent.send(Unit)
+                },
+                onFailure = { error ->
+                    _uiState.update { it.copy(isLoading = false, errorMessage = error.message) }
+                }
+            )
         }
     }
 }

@@ -23,12 +23,11 @@ class HomeScreen : Screen {
         // Obtenemos el Navigator de Voyager
         val navigator = LocalNavigator.currentOrThrow
 
-        // Inyectamos el ScreenModel usando Koin// Elimina esto:
+        // Inyectamos el ScreenModel usando Koin
         val screenModel = getScreenModel<HomeScreenModel>()
 
         // Observamos el estado
         val message by screenModel.welcomeMessage.collectAsState()
-
         Scaffold(
             topBar = {
                 SharedTopAppBar(title = "Inicio", navigator = navigator)
